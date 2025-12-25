@@ -32,7 +32,7 @@ function SearchBar({ onSearch, locations = [], jobTypes = [], workArrangements =
     <form onSubmit={handleSubmit} className="w-full">
       <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 text-gray-900">
         {/* Main Search Row */}
-        <div className="flex flex-col md:flex-row gap-3">
+        <div className="flex flex-row gap-2">
           {/* Keyword Input */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
