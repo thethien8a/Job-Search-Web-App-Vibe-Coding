@@ -42,6 +42,7 @@ class Settings(BaseSettings):
         return (
             f"postgresql://{self.POSTGRES_USER}:{encoded_password}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            f"{'?sslmode=require' if self.POSTGRES_HOST not in ('localhost', '127.0.0.1') else ''}"
         )
     
     @property

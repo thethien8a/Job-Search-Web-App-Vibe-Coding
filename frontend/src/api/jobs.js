@@ -36,10 +36,18 @@ export const getJobLocations = async () => {
 }
 
 /**
- * Get available experience levels for filtering
+ * Get available job types for filtering
  */
-export const getExperienceLevels = async () => {
-    const { data } = await api.get('/jobs/experience-levels')
+export const getJobTypes = async () => {
+    const { data } = await api.get('/jobs/job-types')
+    return data
+}
+
+/**
+ * Get available work arrangements for filtering
+ */
+export const getWorkArrangements = async () => {
+    const { data } = await api.get('/jobs/work-arrangements')
     return data
 }
 

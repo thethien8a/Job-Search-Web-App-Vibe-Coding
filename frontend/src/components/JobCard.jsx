@@ -1,4 +1,4 @@
-import { MapPin, Building2, Banknote, ExternalLink, Star, Calendar } from 'lucide-react'
+import { MapPin, Building2, ExternalLink, Briefcase, Globe, User, Calendar } from 'lucide-react'
 
 function JobCard({ job }) {
     return (
@@ -18,7 +18,7 @@ function JobCard({ job }) {
                     </div>
                 </div>
 
-                {/* Company & Location */}
+                {/* Company & Location & Position */}
                 <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-gray-600">
                         <Building2 className="w-4 h-4 shrink-0" />
@@ -30,20 +30,26 @@ function JobCard({ job }) {
                             <span className="truncate">{job.location}</span>
                         </div>
                     )}
-                    {job.salary && (
-                        <div className="flex items-center gap-2 text-green-600 font-medium">
-                            <Banknote className="w-4 h-4 shrink-0" />
-                            <span className="truncate">{job.salary}</span>
+                    {job.job_position && (
+                        <div className="flex items-center gap-2 text-gray-700 font-medium">
+                            <User className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{job.job_position}</span>
                         </div>
                     )}
                 </div>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                    {job.experience_level && (
+                    {job.job_type && (
                         <span className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full flex items-center gap-1">
-                            <Star className="w-3 h-3" />
-                            {job.experience_level}
+                            <Briefcase className="w-3 h-3" />
+                            {job.job_type}
+                        </span>
+                    )}
+                    {job.work_arrangement && (
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-600 rounded-full flex items-center gap-1">
+                            <Globe className="w-3 h-3" />
+                            {job.work_arrangement}
                         </span>
                     )}
                     {job.job_deadline && (

@@ -2,7 +2,8 @@
 Pydantic Schemas for Request/Response Validation
 Ensures data integrity and provides automatic API documentation
 """
-from typing import Optional
+from typing import Optional, Union
+from datetime import date
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -10,10 +11,11 @@ class JobBase(BaseModel):
     """Base schema for Job data."""
     job_title: str = Field(..., description="Job title")
     company_name: str = Field(..., description="Company name")
-    salary: Optional[str] = Field(None, description="Salary range")
     location: Optional[str] = Field(None, description="Job location")
-    experience_level: Optional[str] = Field(None, description="Required experience level")
-    job_deadline: Optional[str] = Field(None, description="Application deadline")
+    job_type: Optional[str] = Field(None, description="Type of job (e.g. Full-time)")
+    job_position: Optional[str] = Field(None, description="Job position (e.g. Intern, Senior)")
+    job_deadline: Optional[Union[date, str]] = Field(None, description="Application deadline")
+    work_arrangement: Optional[str] = Field(None, description="Work arrangement (e.g. Remote, Onsite)")
 
 
 class JobSummary(JobBase):
@@ -33,8 +35,8 @@ class JobSearchParams(BaseModel):
     """Schema for search query parameters."""
     keyword: Optional[str] = Field(None, max_length=100, description="Search keyword")
     location: Optional[str] = Field(None, max_length=100, description="Filter by location")
-    company: Optional[str] = Field(None, max_length=100, description="Filter by company")
-    experience_level: Optional[str] = Field(None, max_length=50, description="Filter by experience level")
+    job_type: Optional[str] = Field(None, max_length=50, description="Filter by job type")
+    work_arrangement: Optional[str] = Field(None, max_length=50, description="Filter by work arrangement")
     page: int = Field(1, ge=1, description="Page number")
     page_size: int = Field(20, ge=1, le=100, description="Items per page")
 

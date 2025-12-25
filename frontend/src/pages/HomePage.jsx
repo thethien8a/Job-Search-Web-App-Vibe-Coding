@@ -5,7 +5,7 @@ import SearchBar from '../components/SearchBar'
 import JobCard from '../components/JobCard'
 import Pagination from '../components/Pagination'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { searchJobs, getJobLocations, getExperienceLevels, getJobStats } from '../api/jobs'
+import { searchJobs, getJobLocations, getJobTypes, getJobStats, getWorkArrangements } from '../api/jobs'
 
 function HomePage() {
   const [filters, setFilters] = useState({})
@@ -18,10 +18,16 @@ function HomePage() {
     queryFn: getJobLocations,
   })
 
-  // Fetch experience levels for filter dropdown
-  const { data: experienceLevels = [] } = useQuery({
-    queryKey: ['experienceLevels'],
-    queryFn: getExperienceLevels,
+  // Fetch job types for filter dropdown
+  const { data: jobTypes = [] } = useQuery({
+    queryKey: ['jobTypes'],
+    queryFn: getJobTypes,
+  })
+
+  // Fetch work arrangements for filter dropdown
+  const { data: workArrangements = [] } = useQuery({
+    queryKey: ['workArrangements'],
+    queryFn: getWorkArrangements,
   })
 
   // Fetch job statistics
@@ -65,7 +71,8 @@ function HomePage() {
             <SearchBar
               onSearch={handleSearch}
               locations={locations}
-              experienceLevels={experienceLevels}
+              jobTypes={jobTypes}
+              workArrangements={workArrangements}
               initialFilters={filters}
             />
           </div>

@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Search, MapPin, Star, Filter, X } from 'lucide-react'
+import { Search, MapPin, Filter, X, Briefcase, Globe } from 'lucide-react'
 
-function SearchBar({ onSearch, locations = [], experienceLevels = [], initialFilters = {} }) {
+function SearchBar({ onSearch, locations = [], jobTypes = [], workArrangements = [], initialFilters = {} }) {
   const [keyword, setKeyword] = useState(initialFilters.keyword || '')
   const [location, setLocation] = useState(initialFilters.location || '')
-  const [experienceLevel, setExperienceLevel] = useState(initialFilters.experience_level || '')
+  const [jobType, setJobType] = useState(initialFilters.job_type || '')
+  const [workArrangement, setWorkArrangement] = useState(initialFilters.work_arrangement || '')
   const [showFilters, setShowFilters] = useState(false)
 
   const handleSubmit = (e) => {
@@ -12,22 +13,24 @@ function SearchBar({ onSearch, locations = [], experienceLevels = [], initialFil
     onSearch({
       keyword: keyword.trim() || undefined,
       location: location.trim() || undefined,
-      experience_level: experienceLevel || undefined,
+      job_type: jobType || undefined,
+      work_arrangement: workArrangement || undefined,
     })
   }
 
   const handleClear = () => {
     setKeyword('')
     setLocation('')
-    setExperienceLevel('')
+    setJobType('')
+    setWorkArrangement('')
     onSearch({})
   }
 
-  const hasFilters = keyword || location || experienceLevel
+  const hasFilters = keyword || location || jobType || workArrangement
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100">
+      <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 text-gray-900">
         {/* Main Search Row */}
         <div className="flex flex-col md:flex-row gap-3">
           {/* Keyword Input */}
@@ -37,22 +40,12 @@ function SearchBar({ onSearch, locations = [], experienceLevels = [], initialFil
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Tìm kiếm việc làm, công ty..."
+              placeholder="Tìm kiếm việc làm, vị trí..."
               className="input-field pl-10"
             />
           </div>
 
-          {/* Location Input */}
-          <div className="md:w-64 relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Địa điểm"
-              className="input-field pl-10"
-            />
-          </div>
+
 
           {/* Filter Toggle & Search Button */}
           <div className="flex gap-2">
@@ -74,7 +67,7 @@ function SearchBar({ onSearch, locations = [], experienceLevels = [], initialFil
         {/* Expanded Filters */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Location Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -95,21 +88,41 @@ function SearchBar({ onSearch, locations = [], experienceLevels = [], initialFil
                 </div>
               </div>
 
-              {/* Experience Level Filter */}
+              {/* Job Type Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kinh nghiệm
+                  Loại hình công việc
                 </label>
                 <div className="relative">
-                  <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <select
-                    value={experienceLevel}
-                    onChange={(e) => setExperienceLevel(e.target.value)}
+                    value={jobType}
+                    onChange={(e) => setJobType(e.target.value)}
                     className="input-field pl-10 appearance-none"
                   >
-                    <option value="">Tất cả mức kinh nghiệm</option>
-                    {experienceLevels.map((level) => (
-                      <option key={level} value={level}>{level}</option>
+                    <option value="">Tất cả loại hình</option>
+                    {jobTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Work Arrangement Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hình thức làm việc
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    value={workArrangement}
+                    onChange={(e) => setWorkArrangement(e.target.value)}
+                    className="input-field pl-10 appearance-none"
+                  >
+                    <option value="">Tất cả hình thức</option>
+                    {workArrangements.map((arr) => (
+                      <option key={arr} value={arr}>{arr}</option>
                     ))}
                   </select>
                 </div>
