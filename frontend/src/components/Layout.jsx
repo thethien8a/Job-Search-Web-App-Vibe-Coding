@@ -14,7 +14,7 @@ function Layout() {
             </Link>
             <nav className="flex items-center gap-4">
               <a
-                href="https://github.com/thethien8a"
+                href="https://github.com/thethien8a/Job-Search-Web-App-Vibe-Coding"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-600 hover:text-gray-900"
@@ -36,7 +36,7 @@ function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-500 text-sm">
             <p>© {new Date().getFullYear()} Dữ liệu được thu thập từ nhiều nguồn tuyển dụng.</p>
-            <p className="mt-1">Thế Thiện</p>
+            <p className="mt-1">Vibe coded by Thế Thiện</p>
           </div>
         </div>
       </footer>
