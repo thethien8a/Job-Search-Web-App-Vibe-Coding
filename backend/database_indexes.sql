@@ -28,15 +28,25 @@ CREATE INDEX IF NOT EXISTS idx_silver_jobs_fts_position
 ON public_app_layer.silver_jobs 
 USING GIN (to_tsvector('english', coalesce(job_position, '')));
 
--- 4. (Tùy chọn Nâng cao) Index cho tìm kiếm tiếng Việt/Từ khóa bất kỳ (ILIKE)
--- Lý do: Mặc định PostgreSQL tìm kiếm LIKE '%keyword%' rất chậm.
--- Extension pg_trgm giúp tìm kiếm chuỗi con cực nhanh.
--- B1: Vào Supabase -> Database -> Extensions -> Enable "pg_trgm"
--- B2: Chạy lệnh sau (Bỏ comment -- để chạy):
+-- 4. FUZZY SEARCH với pg_trgm (Tìm kiếm có khả năng chịu lỗi đánh máy)
+-- Lý do: Khi user gõ nhầm "data analystt" thay vì "data analyst", 
+-- hệ thống vẫn trả về kết quả phù hợp nhờ so sánh trigram (3-ký tự).
+-- Extension pg_trgm giúp:
+--   ✓ Fuzzy search (tìm kiếm mờ)
+--   ✓ Typo tolerance (chịu lỗi đánh máy)
+--   ✓ Tìm kiếm chuỗi con nhanh với ILIKE
 
--- CREATE EXTENSION IF NOT EXISTS pg_trgm SCHEMA extensions;
--- CREATE INDEX IF NOT EXISTS idx_silver_jobs_trgm_title 
--- ON public_app_layer.silver_jobs USING GIN (job_title gin_trgm_ops);
+-- B1: Enable extension pg_trgm (CHẠY LỆNH NÀY TRƯỚC)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- CREATE INDEX IF NOT EXISTS idx_silver_jobs_trgm_position 
--- ON public_app_layer.silver_jobs USING GIN (job_position gin_trgm_ops);
+-- B2: Tạo GIN Index cho fuzzy search trên job_title và job_position
+-- GIN index với gin_trgm_ops giúp tăng tốc độ similarity() và ILIKE
+CREATE INDEX IF NOT EXISTS idx_silver_jobs_trgm_title 
+ON public_app_layer.silver_jobs USING GIN (job_title gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_silver_jobs_trgm_position 
+ON public_app_layer.silver_jobs USING GIN (job_position gin_trgm_ops);
+
+-- B3: (Tùy chọn) Điều chỉnh ngưỡng similarity mặc định
+-- Mặc định PostgreSQL sử dụng 0.3 (30%). Có thể thay đổi tùy nhu cầu:
+-- SELECT set_limit(0.2); -- Giảm xuống 20% để linh hoạt hơn

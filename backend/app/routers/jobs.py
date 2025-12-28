@@ -69,11 +69,7 @@ async def search_jobs(
     cutoff_date = datetime.now() - timedelta(days=30)
     query = db.query(SilverJob).filter(SilverJob.scraped_at >= cutoff_date)
     
-    # Apply filters using parameterized queries (SQL injection safe)
-    if keyword:
-        # Get expanded search terms (Bilingual support)
-        search_patterns = get_expanded_search_terms(keyword)
-        
+    # Apply keyword search with Smart Search (Synonyms, Full-text, Fuzzy)
     if keyword:
         # 1. Existing Logic: Expanded search terms (Synonyms + Partial Match)
         search_patterns = get_expanded_search_terms(keyword)
@@ -85,7 +81,7 @@ async def search_jobs(
             match_conditions.append(SilverJob.job_title.ilike(pattern))
             match_conditions.append(SilverJob.job_position.ilike(pattern))
             
-        # Condition B: Full Text Search
+        # Condition B: Full Text Search (for English stemming: analyst -> analysts)
         # Using explicit @@ operator instead of .match() to avoid SQL generation errors with func.plainto_tsquery
         match_conditions.append(
             func.to_tsvector('english', func.coalesce(SilverJob.job_title, '')).op("@@")(
@@ -96,6 +92,22 @@ async def search_jobs(
             func.to_tsvector('english', func.coalesce(SilverJob.job_position, '')).op("@@")(
                 func.plainto_tsquery('english', keyword)
             )
+        )
+        
+        # Condition C: FUZZY SEARCH using pg_trgm (Typo tolerance)
+        # This allows "data analystt" to match "data analyst"
+        # Using similarity threshold of 0.25 (25%) - optimized for job search
+        # Lower threshold = more forgiving for typos
+        similarity_threshold = 0.25
+        
+        # Fuzzy match on job_title
+        match_conditions.append(
+            func.similarity(SilverJob.job_title, keyword) >= similarity_threshold
+        )
+        
+        # Fuzzy match on job_position
+        match_conditions.append(
+            func.similarity(SilverJob.job_position, keyword) >= similarity_threshold
         )
         
         # Combine all conditions with OR
@@ -129,7 +141,7 @@ async def search_jobs(
     )
 
 
-from app.utils import cache_response, dropdown_cache
+from app.utils import cache_response, dropdown_cache, search_cache
 
 @router.get("/locations", response_model=list[str])
 @cache_response(dropdown_cache)
@@ -156,17 +168,25 @@ async def get_work_arrangements(db: Session = Depends(get_db)):
 
 
 @router.get("/stats")
-@cache_response(dropdown_cache)
+@cache_response(search_cache)
 async def get_job_stats(db: Session = Depends(get_db)):
-    """Get general statistics about available jobs."""
-    total_jobs = db.query(func.count(SilverJob.job_url)).scalar()
-    total_companies = db.query(func.count(func.distinct(SilverJob.company_name))).scalar()
+    """Get general statistics about available jobs (scraped in last 30 days)."""
+    cutoff_date = datetime.now() - timedelta(days=30)
+    
+    total_jobs = db.query(func.count(SilverJob.job_url))\
+        .filter(SilverJob.scraped_at >= cutoff_date).scalar()
+        
+    total_companies = db.query(func.count(func.distinct(SilverJob.company_name)))\
+        .filter(SilverJob.scraped_at >= cutoff_date).scalar()
     
     # Jobs by location (top 10)
     jobs_by_location = db.query(
         SilverJob.location,
         func.count(SilverJob.job_url)
-    ).group_by(SilverJob.location).order_by(func.count(SilverJob.job_url).desc()).limit(10).all()
+    ).filter(SilverJob.scraped_at >= cutoff_date)\
+    .group_by(SilverJob.location)\
+    .order_by(func.count(SilverJob.job_url).desc())\
+    .limit(10).all()
     
     return {
         "total_jobs": total_jobs,
