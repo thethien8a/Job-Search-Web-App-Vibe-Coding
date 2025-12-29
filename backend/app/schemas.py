@@ -21,6 +21,7 @@ class JobBase(BaseModel):
 class JobSummary(JobBase):
     """Schema for job listing (summary view)."""
     job_url: str = Field(..., description="Original job URL")
+    scraped_at: Optional[Union[date, str, object]] = Field(None, description="Date scraped")
     
     model_config = ConfigDict(from_attributes=True)
 

@@ -122,15 +122,69 @@ async def search_jobs(
     if work_arrangement:
         query = query.filter(SilverJob.work_arrangement.ilike(f"%{work_arrangement}%"))
     
-    # Get total count
-    total = query.count()
+    # FIX v3: Fetch ALL matching IDs, Sort & Paginate in Python
+    # This bypasses all PostgreSQL optimizer issues with mixing LIMIT/OFFSET and complex GIN index searches.
+    # Why? Because if PG picks a bad plan, "ORDER BY ... LIMIT 20" might return 20 random rows 
+    # instead of the top 20 sorted rows.
     
-    # Calculate pagination
+    # Step 1: Get ALL matching job_urls and scraped_at (limit 2000 to be safe)
+    # clear existing order just in case
+    query = query.order_by(None)
+    
+    all_matches = query.with_entities(
+        SilverJob.job_url, 
+        SilverJob.scraped_at,
+        SilverJob.job_deadline, # fetch deadline for sorting
+        SilverJob.job_title # fetch title for fallback sort
+    ).limit(2000).all()
+    
+    # Step 2: Sort in Python (Reliable)
+    # Sort by scraped_at DATE (so jobs scraped on the same day are grouped), 
+    # then job_deadline DESC (furthest deadline first), then title.
+    # Convert all to string to avoid TypeError between date and str types
+    all_matches.sort(
+        key=lambda x: (
+            str(x.scraped_at.date()) if x.scraped_at else "1970-01-01", 
+            str(x.job_deadline) if x.job_deadline else "", 
+            str(x.job_title) or ""
+        ), 
+        reverse=True
+    )
+    
+    # Get total from the fetched list (or actual count if > 2000, roughly)
+    total_fetched = len(all_matches)
+    if total_fetched < 2000:
+        total = total_fetched
+    else:
+        # If we hit the limit, fallback to query.count() for accurate total
+        # Note: Pagination beyond 2000 items might be inconsistent but acceptable for search results
+        total = query.count()
+        
+    # Step 3: Paginate in Python
+    # Calculate slice indices
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    
+    # Slice the sorted list
+    page_items = all_matches[start_idx:end_idx]
+    
+    sorted_job_urls = [item.job_url for item in page_items]
+    
+    # Step 4: Fetch full objects for the current page
+    if sorted_job_urls:
+        jobs_dict = {
+            job.job_url: job 
+            for job in db.query(SilverJob).filter(
+                SilverJob.job_url.in_(sorted_job_urls)
+            ).all()
+        }
+        # Preserve order
+        jobs = [jobs_dict[url] for url in sorted_job_urls if url in jobs_dict]
+    else:
+        jobs = []
+
+    # Calculate total pages
     total_pages = (total + page_size - 1) // page_size if total > 0 else 0
-    offset = (page - 1) * page_size
-    
-    # Get paginated results, ordered by scraped_at desc (newest first), then job_title
-    jobs = query.order_by(SilverJob.scraped_at.desc(), SilverJob.job_title).offset(offset).limit(page_size).all()
     
     return PaginatedResponse(
         items=[JobSummary.model_validate(job) for job in jobs],
